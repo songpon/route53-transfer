@@ -205,13 +205,21 @@ def dump(con, zone_name, fout, **kwargs):
     out.writerow(['NAME', 'TYPE', 'VALUE', 'TTL', 'REGION', 'WEIGHT', 'SETID', 'FAILOVER', "EVALUATE_HEALTH"])
 
     records = list(con.get_all_rrsets(zone['id']))
+    # need to order record for importing by non alias in top
+    main_records=[]
+    alias_records=[]
     for r in records:
         if r.alias_dns_name:
             vals = [':'.join(['ALIAS', r.alias_hosted_zone_id, r.alias_dns_name])]
+            alias_records.append((r,vals,))
         else:
             vals = r.resource_records
+            main_records.append((r,vals,))
+
+    for r,vals in main_records+alias_records:
         for val in vals:
-            out.writerow([r.name, r.type, val, r.ttl, r.region, r.weight, r.identifier, r.failover, r.alias_evaluate_target_health])
+            out.writerow([r.name, r.type, val, r.ttl, r.region, r.weight, 
+            r.identifier, r.failover, r.alias_evaluate_target_health])
     fout.flush()
 
 
